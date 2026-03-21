@@ -1,0 +1,19 @@
+{
+  "name": "debate-me",
+  "version": "1.0.0",
+  "description": "AI that debates you on any topic with live web evidence",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["debate", "ai", "elevenlabs", "firecrawl", "hackathon"],
+  "author": "Socialure",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  }
+}

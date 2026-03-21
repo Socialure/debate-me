@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Master Debate — Agent That Argues Back</title>
+  <meta name="description" content="Pick a topic. Take a side. The agent takes the opposite — and searches the internet for real evidence to destroy your argument." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #09090b;
+      --surface: #111113;
+      --surface2: #18181b;
+      --border: #27272a;
+      --text: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #ef4444;
+      --accent-dim: rgba(239, 68, 68, 0.12);
+      --blue: #3b82f6;
+      --green: #22c55e;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── TYPOGRAPHY ──────────────── */
+    .display-xl {
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+    }
+
+    .display-lg {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── LAYOUT ─────────────────── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ─── HEADER ─────────────────── */
+    .header {
+      padding: 4rem 0 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header.compact {
+      padding: 1.5rem 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header.compact .display-xl {
+      font-size: 2rem;
+    }
+
+    .header.compact .header-sub,
+    .header.compact .header-desc {
+      display: none;
+    }
+
+    .new-debate-btn {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.55rem 1.25rem;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .new-debate-btn:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+    }
+
+    .header.compact .new-debate-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .header-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 1rem;
+      font-weight: 500;
+    }
+
+    .header-desc {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      max-width: 560px;
+      margin-top: 1.25rem;
+    }
+
+    /* ─── SETUP FORM ─────────────── */
+    .setup {
+      padding: 3rem 0;
+    }
+
+    .form-section {
+      margin-bottom: 3rem;
+    }
+
+    .form-section .label {
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    /* Topic Grid */
+    .topic-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+
+    .topic-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .topic-card:hover {
+      border-color: var(--text-muted);
+    }
+
+    .topic-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .topic-card .emoji { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .topic-card .title { font-weight: 900; font-size: 0.85rem; letter-spacing: -0.01em; text-transform: uppercase; }
+    .topic-card .desc { color: var(--text-muted); font-size: 0.72rem; margin-top: 0.2rem; }
+
+    /* Input fields */
+    .input-field {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.15s;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--text-muted);
+    }
+
+    .input-field::placeholder { color: var(--text-muted); }
+
+    .input-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    /* Stance section */
+    .stance-section {
+      display: none;
+      margin-bottom: 3rem;
+    }
+
+    .stance-section.visible { display: block; }
+
+    /* Style Selector */
+    .style-grid {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .style-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .style-btn:hover { border-color: var(--text-muted); color: var(--text); }
+    .style-btn.active { border-color: var(--text); color: var(--text); background: var(--surface2); }
+
+    .style-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .style-btn:hover .style-tooltip { display: block; }
+
+    /* Start Button */
+    .start-area {
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .start-btn {
+      background: var(--text);
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.9rem 2.5rem;
+      color: var(--bg);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      transition: opacity 0.15s;
+    }
+
+    .start-btn:hover { opacity: 0.85; }
+
+    .start-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .start-btn.secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* ─── DEBATE ARENA ───────────── */
+    .arena {
+      display: none;
+      padding: 2rem 0;
+    }
+
+    .arena.visible { display: block; }
+
+    /* Arena Header */
+    .arena-header {
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .arena-topic {
+      font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .arena-stance {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .arena-stance strong {
+      color: var(--text);
+    }
+
+    .arena-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .arena-meta .val { color: var(--text-secondary); }
+
+    /* Arena Body — single column, centered */
+    .arena-body {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Evidence Column (MAIN CONTENT) */
+    .evidence-column {
+      min-height: 400px;
+    }
+
+    .evidence-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .evidence-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .evidence-title h2 {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .live-badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .evidence-stats {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 1rem;
+    }
+
+    .evidence-stats .val { color: var(--text-secondary); font-weight: 600; }
+
+    /* Evidence Items */
+    .evidence-empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .evidence-empty .empty-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .evidence-item {
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .evidence-item:last-child { border-bottom: none; }
+
+    .evidence-item .ev-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .evidence-item.searching .ev-type { color: var(--blue); }
+    .evidence-item.results .ev-type { color: var(--green); }
+    .evidence-item.error .ev-type { color: var(--accent); }
+
+    .evidence-item .ev-query {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.25rem;
+    }
+
+    .evidence-item .ev-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .evidence-item .ev-sources {
+      margin-top: 0.5rem;
+    }
+
+    .source-link {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 0.35rem 0;
+      text-decoration: none;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      transition: color 0.15s;
+    }
+
+    .source-link:hover { color: var(--text); }
+
+    .source-link .source-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      min-width: 1.5rem;
+    }
+
+    .source-link .source-title {
+      font-weight: 500;
+    }
+
+    .source-link .source-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 300px;
+    }
+
+    /* ─── HOW IT WORKS ───────────── */
+    .how-section {
+      padding: 3rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .how-section .label {
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .step {
+      padding: 1.5rem 1rem;
+      border-right: 1px solid var(--border);
+    }
+
+    .step:last-child { border-right: none; }
+
+    .step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+
+    .step-title {
+      font-weight: 800;
+      font-size: 0.9rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.35rem;
+    }
+
+    .step-desc {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    /* ─── TECH STACK ─────────────── */
+    .tech-row {
+      display: flex;
+      gap: 0.5rem;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .tech-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      padding: 0.3rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    /* ─── FOOTER ─────────────────── */
+    .footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .footer a:hover { color: var(--text); }
+
+    /* ─── ANIMATIONS ─────────────── */
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── RESPONSIVE ─────────────── */
+    @media (max-width: 768px) {
+      .topic-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps-grid { grid-template-columns: repeat(2, 1fr); }
+      .step { border-bottom: 1px solid var(--border); }
+      .step:nth-child(2) { border-right: none; }
+      .arena-body {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .topic-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .step { border-right: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <!-- ═══ HEADER ═══ -->
+    <div class="header" id="pageHeader">
+      <div>
+        <div class="display-xl">MASTER DEBATE</div>
+        <div class="header-sub">Agent that argues back with live evidence</div>
+        <div class="header-desc">Pick a topic. Take a side. The agent takes the opposite — and searches the internet for real evidence to destroy your argument.</div>
+      </div>
+      <button class="new-debate-btn" onclick="resetDebate()">↻ New Debate</button>
+    </div>
+
+    <!-- ═══ SETUP PHASE ═══ -->
+    <div class="setup" id="setupPhase">
+
+      <!-- Topic Selection -->
+      <div class="form-section" id="topicSection">
+        <span class="label">Pick your battlefield</span>
+        <div class="topic-grid">
+          <div class="topic-card" data-topic="Pineapple belongs on pizza" onclick="selectTopic(this)">
+            <div class="emoji">🍕</div>
+            <div class="title">Pineapple on Pizza</div>
+            <div class="desc">The eternal food debate</div>
+          </div>
+          <div class="topic-card" data-topic="Remote work is better than working in an office" onclick="selectTopic(this)">
+            <div class="emoji">🏠</div>
+            <div class="title">Remote vs Office</div>
+            <div class="desc">Where should we work?</div>
+          </div>
+          <div class="topic-card" data-topic="AI will replace most jobs within 10 years" onclick="selectTopic(this)">
+            <div class="emoji">🤖</div>
+            <div class="title">AI Job Replacement</div>
+            <div class="desc">The future of work</div>
+          </div>
+          <div class="topic-card" data-topic="Social media does more harm than good to society" onclick="selectTopic(this)">
+            <div class="emoji">📱</div>
+            <div class="title">Social Media Impact</div>
+            <div class="desc">Net positive or negative?</div>
+          </div>
+          <div class="topic-card" data-topic="College education is no longer worth the cost" onclick="selectTopic(this)">
+            <div class="emoji">🎓</div>
+            <div class="title">College Worth It?</div>
+            <div class="desc">Education vs experience</div>
+          </div>
+          <div class="topic-card" data-topic="Electric vehicles are better than gas cars for the environment" onclick="selectTopic(this)">
+            <div class="emoji">⚡</div>
+            <div class="title">EVs vs Gas Cars</div>
+            <div class="desc">Green or greenwashing?</div>
+          </div>
+          <div class="topic-card" data-topic="Cryptocurrency is the future of money" onclick="selectTopic(this)">
+            <div class="emoji">🪙</div>
+            <div class="title">Crypto as Money</div>
+            <div class="desc">Revolution or speculation?</div>
+          </div>
+          <div class="topic-card" data-topic="Water is wet" onclick="selectTopic(this)">
+            <div class="emoji">💧</div>
+            <div class="title">Water Is Wet</div>
+            <div class="desc">The ultimate philosophical debate</div>
+          </div>
+        </div>
+
+        <input type="text" id="customTopic" class="input-field"
+               placeholder="Or type your own debate topic..."
+               oninput="handleCustomTopic(this.value)" />
+      </div>
+
+      <!-- Your Stance -->
+      <div class="stance-section" id="stanceSection">
+        <span class="label">Your position</span>
+        <input type="text" id="stanceInput" class="input-field"
+               placeholder="What's your stance? e.g. 'I believe pineapple absolutely belongs on pizza'"
+               oninput="updateStartBtn()" style="margin-top: 0.75rem;" />
+        <div class="input-hint">Tell the agent what side you're on — it'll take the opposite</div>
+      </div>
+
+      <!-- Debate Style -->
+      <div class="form-section" id="styleSection">
+        <span class="label">Debate style</span>
+        <div class="style-grid">
+          <button class="style-btn" data-style="oxford" onclick="selectStyle(this)">
+            Oxford Formal
+            <span class="style-tooltip">Structured, turn-based formal debate with rebuttals and closing arguments</span>
+          </button>
+          <button class="style-btn" data-style="street" onclick="selectStyle(this)">
+            Street Debate
+            <span class="style-tooltip">Casual, rapid-fire back-and-forth — no rules, just vibes</span>
+          </button>
+          <button class="style-btn" data-style="socratic" onclick="selectStyle(this)">
+            Socratic Method
+            <span class="style-tooltip">Agent challenges you with probing questions to expose flaws in reasoning</span>
+          </button>
+          <button class="style-btn active" data-style="comedian" onclick="selectStyle(this)">
+            Comedy Roast
+            <span class="style-tooltip">Savage, funny takedowns — the agent roasts your argument with humor</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Start -->
+      <div class="start-area">
+        <button class="start-btn" id="startBtn" onclick="startDebate()" disabled>
+          Start Debate
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ DEBATE ARENA ═══ -->
+    <div class="arena" id="debateArena">
+
+      <!-- Arena Header -->
+      <div class="arena-header">
+        <div class="arena-topic" id="arenaTopic"></div>
+        <div class="arena-stance">Your position: <strong id="arenaStance"></strong></div>
+        <div class="arena-meta">
+          <span>Style: <span class="val" id="arenaStyle"></span></span>
+          <span>Searches: <span class="val" id="arenaSearchCount">0</span></span>
+          <span>Sources: <span class="val" id="arenaSourceCount">0</span></span>
+          <span>Duration: <span class="val" id="arenaDuration">0:00</span></span>
+        </div>
+      </div>
+
+      <!-- Centered Evidence Feed -->
+      <div class="arena-body">
+
+        <!-- Evidence Feed (MAIN CONTENT) -->
+        <div class="evidence-column">
+          <div class="evidence-header">
+            <div class="evidence-title">
+              <h2>Live Evidence</h2>
+              <span class="live-badge"><span class="live-dot"></span> Live</span>
+            </div>
+            <div class="evidence-stats">
+              <span><span class="val" id="evidenceSearchCount">0</span> searches</span>
+              <span><span class="val" id="evidenceSourceCount">0</span> sources</span>
+            </div>
+          </div>
+
+          <div id="evidenceItems">
+            <div class="evidence-empty">
+              <div class="empty-icon">⚡</div>
+              <div>Evidence will appear here as the agent searches the web during your debate.</div>
+              <div style="margin-top:0.5rem; font-size:0.75rem;">Connect to the voice agent to begin.</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ HOW IT WORKS ═══ -->
+    <div class="how-section" id="howItWorks">
+      <span class="label">How it works</span>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-title">Pick a topic</div>
+          <div class="step-desc">Choose a preset or type your own controversial topic.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-title">State your side</div>
+          <div class="step-desc">Take a position — the agent automatically takes the opposite.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-title">Live search</div>
+          <div class="step-desc">Agent searches the web mid-debate for real evidence against you.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-title">Get destroyed</div>
+          <div class="step-desc">Sourced rebuttals you can't ignore. Every claim backed by data.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="tech-row">
+      <span class="tech-badge">ElevenLabs Agents</span>
+      <span class="tech-badge">Firecrawl Search</span>
+      <span class="tech-badge">GLM-4.5 AIR</span>
+      <span class="tech-badge">Node.js</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    Built for <a href="https://hacks.elevenlabs.io/">ElevenHacks #1</a> ·
+    <a href="https://elevenlabs.io">ElevenLabs</a> + <a href="https://firecrawl.dev">Firecrawl</a> ·
+    <a href="https://github.com/Socialure/debate-me">Source</a>
+  </div>
+
+  <!-- ElevenLabs Conversational AI Widget -->
+  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
+  <script>
+    // ─── State ──────────────────────
+    let selectedTopic = '';
+    let selectedStyle = 'comedian';
+    let AGENT_ID = '';
+    let evtSource = null;
+    let searchCount = 0;
+    let sourceCount = 0;
+    let debateStartTime = null;
+    let durationInterval = null;
+    let widgetEl = null;
+    let isConnected = false;
+
+    // Style-specific agent IDs (each has unique voice + personality)
+    const styleAgents = {
+      comedian: 'agent_5701km52rkcxfy298xma2bd1fzvc',
+      oxford:   'agent_1001km51541df5kv5jk52be7gxce',
+      street:   'agent_8501km51556nf87tathk247fppdb',
+      socratic: 'agent_1601km5156qmfshby22d83vtn324',
+    };
+
+    // Set default agent ID
+    AGENT_ID = styleAgents[selectedStyle] || styleAgents.comedian;
+
+    // ─── Setup Phase Functions ──────
+    function selectTopic(card) {
+      document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedTopic = card.dataset.topic;
+      document.getElementById('customTopic').value = '';
+      showStanceSection();
+      updateStartBtn();
+    }
+
+    function handleCustomTopic(val) {
+      if (val.trim()) {
+        document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+        selectedTopic = val.trim();
+        showStanceSection();
+      } else {
+        selectedTopic = '';
+        document.getElementById('stanceSection').classList.remove('visible');
+      }
+      updateStartBtn();
+    }
+
+    function showStanceSection() {
+      document.getElementById('stanceSection').classList.add('visible');
+      document.getElementById('stanceInput').placeholder = `e.g. "I believe ${selectedTopic.toLowerCase()}"`;
+    }
+
+    function selectStyle(btn) {
+      document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedStyle = btn.dataset.style;
+      // Switch to style-specific agent (different voice + personality)
+      AGENT_ID = styleAgents[selectedStyle] || styleAgents.comedian;
+    }
+
+    function updateStartBtn() {
+      document.getElementById('startBtn').disabled = !selectedTopic;
+    }
+
+    function getStyleLabel(style) {
+      const labels = { oxford: 'Oxford Formal', street: 'Street Debate', socratic: 'Socratic Method', comedian: 'Comedy Roast' };
+      return labels[style] || style;
+    }
+
+    // ─── Start Debate ──────────────
+    let prefetchedEvidence = '';
+
+    async function startDebate() {
+      if (!selectedTopic || !AGENT_ID) return;
+
+      const stance = document.getElementById('stanceInput').value.trim() || selectedTopic;
+
+      // Switch to arena immediately (don't wait for prefetch)
+      document.getElementById('setupPhase').style.display = 'none';
+      document.getElementById('howItWorks').style.display = 'none';
+      document.getElementById('pageHeader').classList.add('compact');
+
+      // Populate arena
+      document.getElementById('arenaTopic').textContent = selectedTopic;
+      document.getElementById('arenaStance').textContent = stance;
+      document.getElementById('arenaStyle').textContent = getStyleLabel(selectedStyle);
+      document.getElementById('debateArena').classList.add('visible');
+
+      // Start duration timer
+      debateStartTime = Date.now();
+      durationInterval = setInterval(updateDuration, 1000);
+
+      // Connect SSE first so pre-fetch results show in the feed
+      connectEvidenceStream();
+
+      // Pre-fetch evidence BEFORE spawning the widget
+      // This gives the agent evidence to use immediately without pausing
+      try {
+        const pfRes = await fetch('/api/prefetch-evidence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: selectedTopic, user_stance: stance }),
+        });
+        const pfData = await pfRes.json();
+        prefetchedEvidence = pfData.evidence || '';
+        console.log(`Pre-fetched ${pfData.count || 0} sources`);
+      } catch (e) {
+        console.warn('Pre-fetch failed, agent will search live:', e);
+        prefetchedEvidence = '';
+      }
+
+      // Now spawn the widget with pre-loaded evidence
+      spawnWidget();
+
+      // Scroll to arena
+      document.getElementById('debateArena').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ─── Widget Management ──────────
+    // (Each style has its own ElevenLabs agent with voice baked in)
+    function spawnWidget() {
+      if (!AGENT_ID) return;
+
+      const stance = document.getElementById('arenaStance')?.textContent || selectedTopic;
+
+      // Remove any existing widget
+      if (widgetEl) {
+        widgetEl.remove();
+        widgetEl = null;
+      }
+
+      // Create the ElevenLabs widget element (floats bottom-right by default)
+      widgetEl = document.createElement('elevenlabs-convai');
+      widgetEl.setAttribute('agent-id', AGENT_ID);
+      widgetEl.setAttribute('dynamic-variables', JSON.stringify({
+        topic: selectedTopic,
+        user_stance: stance,
+        debate_style: selectedStyle,
+        evidence: prefetchedEvidence || 'No pre-loaded evidence available. Use your search tool.',
+      }));
+      widgetEl.setAttribute('start-call-text', 'Start Debate');
+      widgetEl.setAttribute('end-call-text', 'End Debate');
+
+      document.body.appendChild(widgetEl);
+      isConnected = true;
+
+      // Remove empty evidence state
+      const emptyEl = document.querySelector('.evidence-empty');
+      if (emptyEl) emptyEl.remove();
+
+      addEvidence('searching', `Debate started: "${selectedTopic}" — ${getStyleLabel(selectedStyle)}`, null);
+    }
+
+    function killWidget() {
+      if (widgetEl) {
+        widgetEl.remove();
+        widgetEl = null;
+      }
+      isConnected = false;
+      if (durationInterval) {
+        clearInterval(durationInterval);
+      }
+    }
+
+    // ─── Duration Timer ────────────
+    function updateDuration() {
+      if (!debateStartTime) return;
+      const elapsed = Math.floor((Date.now() - debateStartTime) / 1000);
+      const mins = Math.floor(elapsed / 60);
+      const secs = elapsed % 60;
+      document.getElementById('arenaDuration').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // ─── Evidence Feed ─────────────
+    function connectEvidenceStream() {
+      if (evtSource) evtSource.close();
+      evtSource = new EventSource('/api/evidence-stream');
+
+      evtSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'searching') {
+            addEvidence('searching', data.query, data.timestamp);
+          } else if (data.type === 'results') {
+            addEvidenceResults(data);
+          } else if (data.type === 'error') {
+            addEvidence('error', data.message, data.timestamp);
+          }
+        } catch (e) {
+          console.warn('SSE parse error:', e);
+        }
+      };
+    }
+
+    function addEvidence(type, text, timestamp) {
+      const container = document.getElementById('evidenceItems');
+      // Remove empty state
+      const emptyEl = container.querySelector('.evidence-empty');
+      if (emptyEl) emptyEl.remove();
+
+      const item = document.createElement('div');
+      item.className = `evidence-item ${type}`;
+      const typeLabel = type === 'searching' ? 'Searching' : type === 'error' ? 'Error' : 'Result';
+      const ts = timestamp ? new Date(timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+      item.innerHTML = `
+        <div class="ev-type">${typeLabel}</div>
+        <div class="ev-query">${text}</div>
+        <div class="ev-time">${ts}</div>
+      `;
+      container.prepend(item);
+
+      if (type === 'searching') {
+        searchCount++;
+        updateEvidenceCounts();
+      }
+    }
+
+    function addEvidenceResults(data) {
+      const container = document.getElementById('evidenceItems');
+      const emptyEl = container.querySelector('.evidence-empty');
+      if (emptyEl) emptyEl.remove();
+
+      const item = document.createElement('div');
+      item.className = 'evidence-item results';
+
+      let sourcesHtml = '';
+      if (data.sources && data.sources.length > 0) {
+        sourcesHtml = '<div class="ev-sources">' +
+          data.sources.map((s, i) =>
+            `<a class="source-link" href="${s.url}" target="_blank" rel="noopener">
+              <span class="source-num">${i + 1}.</span>
+              <span class="source-title">${s.title || 'Untitled'}</span>
+            </a>`
+          ).join('') +
+          '</div>';
+      }
+
+      const ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+      item.innerHTML = `
+        <div class="ev-type">Found ${data.count} sources</div>
+        <div class="ev-query">${data.query}</div>
+        ${sourcesHtml}
+        <div class="ev-time">${ts}</div>
+      `;
+      container.prepend(item);
+
+      sourceCount += (data.count || 0);
+      updateEvidenceCounts();
+    }
+
+    function updateEvidenceCounts() {
+      document.getElementById('arenaSearchCount').textContent = searchCount;
+      document.getElementById('arenaSourceCount').textContent = sourceCount;
+      document.getElementById('evidenceSearchCount').textContent = searchCount;
+      document.getElementById('evidenceSourceCount').textContent = sourceCount;
+    }
+
+    // ─── Reset / New Debate ────────
+    function resetDebate() {
+      killWidget();
+      if (evtSource) { evtSource.close(); evtSource = null; }
+      if (durationInterval) { clearInterval(durationInterval); durationInterval = null; }
+
+      searchCount = 0;
+      sourceCount = 0;
+      selectedTopic = '';
+      isConnected = false;
+
+      // Reset UI
+      document.getElementById('setupPhase').style.display = '';
+      document.getElementById('howItWorks').style.display = '';
+      document.getElementById('pageHeader').classList.remove('compact');
+      document.getElementById('debateArena').classList.remove('visible');
+      document.getElementById('stanceSection').classList.remove('visible');
+      document.getElementById('stanceInput').value = '';
+      document.getElementById('customTopic').value = '';
+      document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('evidenceItems').innerHTML = `
+        <div class="evidence-empty">
+          <div class="empty-icon">⚡</div>
+          <div>Evidence will appear here as the agent searches the web during your debate.</div>
+          <div style="margin-top:0.5rem; font-size:0.75rem;">Connect to the voice agent to begin.</div>
+        </div>
+      `;
+      // Reset style — Comedy Roast is default
+      document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.style-btn[data-style="comedian"]').classList.add('active');
+      selectedStyle = 'comedian';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>
